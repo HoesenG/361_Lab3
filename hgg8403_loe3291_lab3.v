@@ -12,6 +12,7 @@
 `define FUNC_ADD      3'b000
 `define AUX_FUNC_ADD  7'b0000000
 `define AUX_FUNC_SUB  7'b0100000
+`define AUX_FUNC_MUL_DIV  7'b0000001
 `define SIZE_BYTE  2'b00
 `define SIZE_HWORD 2'b01
 `define SIZE_WORD  2'b10
@@ -73,7 +74,7 @@ module SingleCycleCPU(halt, clk, rst);
    assign RWrEn = 1'b1;  // At the moment every instruction will write to the register file
 
    // Hardwired to support R-Type instructions -- please add muxes and other control signals
-   ExecutionUnit EU(.out(RWrdata), .opA(Rdata1), .opB(Rdata2), .func(funct3), .auxFunc(funct7));
+   ExecutionUnit EU(.out(RWrdata), .opA(Rdata1), .opB(Rdata2), .func(funct3), .auxFunc(funct7), .opcode(opcode));
 
    // Fetch Address Datapath
    assign PC_Plus_4 = PC + 4;
@@ -165,7 +166,7 @@ module ExecutionUnit(out, opA, opB, func, auxFunc, opcode);
                   (opcode == `OPCODE_JALR) ? jalr :
                   (opcode == `OPCODE_BRANCH) ? branch :
                   (opcode == `OPCODE_LOAD || opcode == `OPCODE_STORE) ? load_store_addr :
-                  (opcode == `OPCODE_MUL_DIV) ?
+                  (opcode == `OPCODE_MUL_DIV || auxFunc == `OPCODE_MUL_DIV) ?
                      ((func == 3'b000) ? mul_result :
                         (func == 3'b001) ? mulh_result :
                         (func == 3'b010) ? mulhsu_result :
