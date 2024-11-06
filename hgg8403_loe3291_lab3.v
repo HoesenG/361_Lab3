@@ -143,7 +143,7 @@ module SingleCycleCPU(halt, clk, rst);
    MUX32_2_1 MUX_Result(.a(ExecutionResult), .b(LoadData), .sel(MemtoReg), .o(Result));
 
    // write to register file
-   assign PC_AUIPC = PC + imm;
+   assign PC_AUIPC = PC + (imm<<12);
    MUX32_4_1 MUX_RWrdata(.a(PC_Plus_4), .b(PC_AUIPC), .c(Result), .d(Result), .sel(RWr_sel), .o(RWrdata));
 
 
@@ -292,7 +292,7 @@ module Control(funct7, funct3, opcode, logic_result, MemWrEn, RWrEn, imm_sel, EU
                         (opcode == `OPCODE_AUIPC) ? 2'b01 :
                         (opcode == `OPCODE_JAL || opcode == `OPCODE_JALR) ? 2'b00 : 
                         2'b10;
-      assign NPC_sel = (opcode == `OPCODE_BRANCH) ? 2'b01 :
+      assign NPC_sel = (opcode == `OPCODE_BRANCH && logic_result) ? 2'b01 :
                          (opcode == `OPCODE_JAL) ? 2'b10 : 
                            (opcode == `OPCODE_JALR) ? 2'b11 : 
                            2'b00;
@@ -305,12 +305,14 @@ module ImmGen(Inst, imm_sel, imm);
     output [31:0] imm;
  
     wire [31:0] imm_U;
-    wire [31:0] imm_J;
-    wire [31:0] imm_I;
+    wire [31:0] imm_JAL;
+    wire [31:0] imm_JALR;
+    wire [31:0] imm_I_s;
+    wire [31:0] imm_I_u;
     wire [31:0] imm_S;
     wire [31:0] imm_B;
 
-   assign imm_U = {Inst[31:12], 12'b0};
+   assign imm_U = {12'b0, Inst[31:12]};
    assign imm_JAL = { {11{Inst[31]}}, Inst[31], Inst[19:12], Inst[20], Inst[30:21], 1'b0 };
    assign imm_JALR = {{20{Inst[31]}}, Inst[31:20]};
    assign imm_I_s = {{20{Inst[31]}}, Inst[31:20]};
