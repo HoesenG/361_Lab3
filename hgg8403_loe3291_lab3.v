@@ -96,8 +96,8 @@ module SingleCycleCPU(halt, clk, rst);
              || (funct3 == `FUNC_AND) || (funct3 == `FUNC_B) || (funct3 == `FUNC_BU)
              || (funct3 == `FUNC_H) || (funct3 == `FUNC_HU) || (funct3 == `FUNC_OR)
              || (funct3 == `FUNC_SLL) || (funct3 == `FUNC_SLT) || (funct3 == `FUNC_SLTU)
-             || (funct3 == `FUNC_SRL) || (funct3 == `FUNC_W) || (funct3 == `FUNC_XOR)) &&
-		      ((funct7 == `AUX_FUNC_ADD) || (funct7 == `AUX_FUNC_SUB))|| (funct7 == `AUX_FUNC_MUL_DIV));
+             || (funct3 == `FUNC_SRL) || (funct3 == `FUNC_W) || (funct3 == `FUNC_XOR)) ||
+		      ((funct7 == `AUX_FUNC_ADD) || (funct7 == `AUX_FUNC_SUB))|| (funct7 == `AUX_FUNC_MUL_DIV)) || (InstWord == 32'h00000000);
      
    // System State 
    Mem   MEM(.InstAddr(PC), .InstOut(InstWord), 
