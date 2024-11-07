@@ -92,8 +92,12 @@ module SingleCycleCPU(halt, clk, rst);
    assign invalid_op = !(((opcode == `OPCODE_COMPUTE) || (opcode == `OPCODE_AUIPC)
              || (opcode == `OPCODE_BRANCH) || (opcode == `OPCODE_IMM) || (opcode == `OPCODE_JAL)
              || (opcode == `OPCODE_JALR) || (opcode == `OPCODE_LOAD) || (opcode == `OPCODE_LUI) 
-             || (opcode == `OPCODE_COMPUTE) || (opcode == `OPCODE_STORE)) && (funct3 == `FUNC_ADD) &&
-		      ((funct7 == `AUX_FUNC_ADD) || (funct7 == `AUX_FUNC_SUB)));
+             || (opcode == `OPCODE_STORE)) && ((funct3 == `FUNC_ADD) 
+             || (funct3 == `FUNC_AND) || (funct3 == `FUNC_B) || (funct3 == `FUNC_BU)
+             || (funct3 == `FUNC_H) || (funct3 == `FUNC_HU) || (funct3 == `FUNC_OR)
+             || (funct3 == `FUNC_SLL) || (funct3 == `FUNC_SLT) || (funct3 == `FUNC_SLTU)
+             || (funct3 == `FUNC_SRL) || (funct3 == `FUNC_W) || (funct3 == `FUNC_XOR)) &&
+		      ((funct7 == `AUX_FUNC_ADD) || (funct7 == `AUX_FUNC_SUB))|| (funct7 == `AUX_FUNC_MUL_DIV));
      
    // System State 
    Mem   MEM(.InstAddr(PC), .InstOut(InstWord), 
@@ -108,7 +112,7 @@ module SingleCycleCPU(halt, clk, rst);
    // Instruction Decode
    assign opcode = InstWord[6:0];   
    assign Rdst = InstWord[11:7]; 
-   assign Rsrc1 = InstWord[19:15]; 
+   assign Rsrc1 = InstWord[19:15];
    assign Rsrc2 = InstWord[24:20];
    assign funct3 = InstWord[14:12];  // R-Type, I-Type, S-Type
    assign funct7 = InstWord[31:25];  // R-Type
@@ -155,7 +159,6 @@ module SingleCycleCPU(halt, clk, rst);
    MUX32_4_1 MUX_NPC(.a(PC_Plus_4), .b(PC_branch), .c(PC_jal), .d(PC_jalr), .sel(NPC_sel), .o(NPC));
    
 endmodule // SingleCycleCPU
-
 
 // Incomplete version of Lab2 execution unit
 // You will need to extend it. Feel free to modify the interface also
