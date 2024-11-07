@@ -52,7 +52,6 @@ module SingleCycleCPU(halt, clk, rst);
    wire [4:0]  Rsrc1, Rsrc2, Rdst;
    wire [`WORD_WIDTH-1:0] Rdata1, Rdata2, SrcB, RWrdata;
    wire        RWrEn;
-   wire logic_result;
 
    wire [`WORD_WIDTH-1:0] NPC, PC_Plus_4;
    wire [6:0]  opcode;
@@ -128,7 +127,7 @@ module SingleCycleCPU(halt, clk, rst);
 
    // Hardwired to support R-Type instructions -- please add muxes and other control signals
    MUX32_2_1 MUX_opB(.a(Rdata2), .b(imm), .sel(EUSrc), .o(SrcB));
-   ExecutionUnit EU(.out(ExecutionResult), .opA(Rdata1), .opB(SrcB), .func(funct3), .auxFunc(funct7), .opcode(opcode), .logic_result(logic_result));
+   ExecutionUnit EU(.out(ExecutionResult), .opA(Rdata1), .opB(SrcB), .func(funct3), .auxFunc(funct7), .opcode(opcode));
 
    // StoreData
    assign StoreData_B = { {24{Rdata2[7]}}, Rdata2[7:0]};
@@ -164,17 +163,16 @@ endmodule // SingleCycleCPU
 // Incomplete version of Lab2 execution unit
 // You will need to extend it. Feel free to modify the interface also
 
-module ExecutionUnit(out, opA, opB, func, auxFunc, opcode, logic_result);
+module ExecutionUnit(out, opA, opB, func, auxFunc, opcode);
    output [`WORD_WIDTH-1:0] out;
    input [`WORD_WIDTH-1:0] opA, opB;
    input [2:0] func;
    input [6:0] auxFunc, opcode;
-   output logic_result;
 
    wire [`WORD_WIDTH-1:0] add, sub, slli, srli, srai,
                         logicAnd, logicOr, logicXor, slti, sltiu,
                         mul, mulh, mulhsu, mulhu, div, divu, rem, remu,
-                        lui, auipc, jal, jalr, addi, xori, ori, andi,
+                        lui, jal, jalr, addi, xori, ori, andi,
                         slli_imm, srli_imm, srai_imm, load_store_addr, branch,
                         mul_result, mulh_result, mulhsu_result, mulhu_result, 
                         div_result, divu_result, rem_result, remu_result;
@@ -201,7 +199,6 @@ module ExecutionUnit(out, opA, opB, func, auxFunc, opcode, logic_result);
    assign srai_imm = $signed(opA) >>> opB[4:0];
 
    assign lui = opB << 12;
-   assign auipc = opA + opB;
    assign jal = opA + opB;
    assign jalr = (opA + opB) & ~1;
 
@@ -211,7 +208,6 @@ module ExecutionUnit(out, opA, opB, func, auxFunc, opcode, logic_result);
                   (func == 3'b101 && $signed(opA) >= $signed(opB)) ? 1 : // BGE
                   (func == 3'b110 && opA < opB) ? 1 :          // BLTU
                   (func == 3'b111 && opA >= opB) ? 1 : 0;      // BGEU
-   assign logic_result = branch;
    assign load_store_addr = opA + opB;
 
    assign mul_result = opA * opB;
@@ -243,12 +239,11 @@ module ExecutionUnit(out, opA, opB, func, auxFunc, opcode, logic_result);
                         (func == 3'b101) ? (auxFunc[5] ? srai_imm : srli_imm) :
                         32'hXXXXXXXX) :
                   (opcode == `OPCODE_LUI) ? lui :
-                  (opcode == `OPCODE_AUIPC) ? auipc :
                   (opcode == `OPCODE_JAL) ? jal :
                   (opcode == `OPCODE_JALR) ? jalr :
                   (opcode == `OPCODE_BRANCH) ? branch :
                   (opcode == `OPCODE_LOAD || opcode == `OPCODE_STORE) ? load_store_addr :
-                  (opcode == `OPCODE_COMPUTE || auxFunc == `OPCODE_COMPUTE) ?
+                  (opcode == `OPCODE_COMPUTE && auxFunc == `AUX_FUNC_MUL_DIV) ?
                      ((func == 3'b000) ? mul_result :
                         (func == 3'b001) ? mulh_result :
                         (func == 3'b010) ? mulhsu_result :
