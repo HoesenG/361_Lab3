@@ -1,6 +1,6 @@
 // Template for Northwestern - CompEng 361 - Lab3 -- Version 1.1
-// Groupname:
-// NetIDs:
+// Groupname: weisihouxuan
+// NetIDs: hgg8403, loe3291
 
 // Some useful defines...please add your own
 `define WORD_WIDTH 32
@@ -52,6 +52,7 @@ module SingleCycleCPU(halt, clk, rst);
    wire [4:0]  Rsrc1, Rsrc2, Rdst;
    wire [`WORD_WIDTH-1:0] Rdata1, Rdata2, SrcB, RWrdata;
    wire        RWrEn;
+   wire logic_result;
 
    wire [`WORD_WIDTH-1:0] NPC, PC_Plus_4;
    wire [6:0]  opcode;
@@ -117,8 +118,8 @@ module SingleCycleCPU(halt, clk, rst);
    assign funct3 = InstWord[14:12];  // R-Type, I-Type, S-Type
    assign funct7 = InstWord[31:25];  // R-Type
 
-   assign MemWrEn = 1'b0; // Change this to allow stores
-   assign RWrEn = 1'b1;  // At the moment every instruction will write to the register file
+   // assign MemWrEn = 1'b0; // Change this to allow stores
+   // assign RWrEn = 1'b1;  // At the moment every instruction will write to the register file
 
    // Control Unit
    Control CU(.funct7(funct7), .funct3(funct3), .opcode(opcode), .logic_result(ExecutionResult[0]),.MemWrEn(MemWrEn), .RWrEn(RWrEn), .imm_sel(imm_sel), .EUSrc(EUSrc), .Store_sel(Store_sel), .Load_sel(Load_sel), .MemtoReg(MemtoReg), .RWr_sel(RWr_sel), .NPC_sel(NPC_sel));
@@ -127,7 +128,7 @@ module SingleCycleCPU(halt, clk, rst);
 
    // Hardwired to support R-Type instructions -- please add muxes and other control signals
    MUX32_2_1 MUX_opB(.a(Rdata2), .b(imm), .sel(EUSrc), .o(SrcB));
-   ExecutionUnit EU(.out(ExecutionResult), .opA(Rdata1), .opB(SrcB), .func(funct3), .auxFunc(funct7), .opcode(opcode));
+   ExecutionUnit EU(.out(ExecutionResult), .opA(Rdata1), .opB(SrcB), .func(funct3), .auxFunc(funct7), .opcode(opcode), .logic_result(logic_result));
 
    // StoreData
    assign StoreData_B = { {24{Rdata2[7]}}, Rdata2[7:0]};
@@ -163,16 +164,20 @@ endmodule // SingleCycleCPU
 // Incomplete version of Lab2 execution unit
 // You will need to extend it. Feel free to modify the interface also
 
-module ExecutionUnit(out, opA, opB, func, auxFunc, opcode);
+module ExecutionUnit(out, opA, opB, func, auxFunc, opcode, logic_result);
    output [`WORD_WIDTH-1:0] out;
    input [`WORD_WIDTH-1:0] opA, opB;
    input [2:0] func;
    input [6:0] auxFunc, opcode;
+   output logic_result;
 
    wire [`WORD_WIDTH-1:0] add, sub, slli, srli, srai,
                         logicAnd, logicOr, logicXor, slti, sltiu,
                         mul, mulh, mulhsu, mulhu, div, divu, rem, remu,
-                        lui, auipc, jal, jalr, branch;
+                        lui, auipc, jal, jalr, addi, xori, ori, andi,
+                        slli_imm, srli_imm, srai_imm, load_store_addr, branch,
+                        mul_result, mulh_result, mulhsu_result, mulhu_result, 
+                        div_result, divu_result, rem_result, remu_result;
 
    assign add = opA + opB;
    assign sub = opA - opB;
@@ -206,7 +211,7 @@ module ExecutionUnit(out, opA, opB, func, auxFunc, opcode);
                   (func == 3'b101 && $signed(opA) >= $signed(opB)) ? 1 : // BGE
                   (func == 3'b110 && opA < opB) ? 1 :          // BLTU
                   (func == 3'b111 && opA >= opB) ? 1 : 0;      // BGEU
-
+   assign logic_result = branch;
    assign load_store_addr = opA + opB;
 
    assign mul_result = opA * opB;

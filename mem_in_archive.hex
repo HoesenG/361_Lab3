@@ -34,6 +34,7 @@ b3 4e 30 02   // sltu x27, x2, x3
 b3 5e 41 04   // srl x29, x2, x4
 33 df 11 40   // sra x30, x3, x1
 b3 6f 16 04   // or x31, x2, x4
+b3 f6 12 04   // and x31, x1, x3
 b3 8b 08 02   // mul x5, x1, x2
 33 8c 41 04   // mulh x6, x1, x3
 b3 9c 20 02   // mulhsu x7, x1, x4
