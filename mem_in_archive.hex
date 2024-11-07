@@ -2,7 +2,7 @@
 b3 83 30 40   // sub x7, x1, x3
 37 84 00 00   // lui x8, 8
 97 84 00 00   // auipc x9, 8
-ef 03 c0 00   // jal x7, 10
+ef 03 c0 00   // jal x7, 12
 67 84 c0 00   // jalr x8, x1, 12
 63 8c 20 00   // beq x1, x2, end
 63 9a 30 00   // bne x1, x3, end

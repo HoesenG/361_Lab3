@@ -176,6 +176,7 @@ module ExecutionUnit(out, opA, opB, func, auxFunc, opcode);
                         slli_imm, srli_imm, srai_imm, load_store_addr, branch,
                         mul_result, mulh_result, mulhsu_result, mulhu_result, 
                         div_result, divu_result, rem_result, remu_result;
+   wire [63:0] full_product, full_product_s, full_product_su;
 
    assign add = opA + opB;
    assign sub = opA - opB;
@@ -210,22 +211,25 @@ module ExecutionUnit(out, opA, opB, func, auxFunc, opcode);
                   (func == 3'b111 && opA >= opB) ? 1 : 0;      // BGEU
    assign load_store_addr = opA + opB;
 
-   assign mul_result = opA * opB;
-   assign mulh_result = ($signed(opA) * $signed(opB)) >>> 32;
-   assign mulhsu_result = ($signed(opA) * opB) >>> 32;
-   assign mulhu_result = (opA * opB) >>> 32;
+   assign full_product = opA * opB;
+   assign full_product_s = $signed(opA) * $signed(opB);
+   assign full_product_su = $signed(opA) * opB;
+   assign mul_result = full_product_s[31:0];
+   assign mulh_result = full_product_s[63:32];
+   assign mulhsu_result = full_product_su[63:32];
+   assign mulhu_result = full_product[63:32];
    assign div_result = $signed(opA) / $signed(opB);
    assign divu_result = opA / opB;
    assign rem_result = $signed(opA) % $signed(opB);
    assign remu_result = opA % opB;
 
-   assign out = (opcode == `OPCODE_COMPUTE) ? 
-                     ((func == 3'b000) ? (auxFunc == 7'b0000000 ? add : sub) :
+   assign out = ((opcode == `OPCODE_COMPUTE) && (auxFunc != `AUX_FUNC_MUL_DIV)) ? 
+                     ((func == 3'b000) ? ((auxFunc == `AUX_FUNC_ADD) ? add : sub) :
                         (func == 3'b001) ? slli :
                         (func == 3'b010) ? compLT :
                         (func == 3'b011) ? compLTU :
                         (func == 3'b100) ? logicXor :
-                        (func == 3'b101) ? (auxFunc[5] ? srai : srli) :
+                        (func == 3'b101) ? ((auxFunc == `AUX_FUNC_SUB) ? srai : srli) :
                         (func == 3'b110) ? logicOr :
                         (func == 3'b111) ? logicAnd : 32'hXXXXXXXX) :
                   (opcode == `OPCODE_IMM) ? 
@@ -236,7 +240,7 @@ module ExecutionUnit(out, opA, opB, func, auxFunc, opcode);
                         (func == 3'b110) ? ori :
                         (func == 3'b111) ? andi :
                         (func == 3'b001) ? slli_imm :
-                        (func == 3'b101) ? (auxFunc[5] ? srai_imm : srli_imm) :
+                        (func == 3'b101) ? ((auxFunc == `AUX_FUNC_SUB) ? srai_imm : srli_imm) :
                         32'hXXXXXXXX) :
                   (opcode == `OPCODE_LUI) ? lui :
                   (opcode == `OPCODE_JAL) ? jal :
@@ -269,7 +273,7 @@ module Control(funct7, funct3, opcode, logic_result, MemWrEn, RWrEn, imm_sel, EU
       output MemWrEn, RWrEn;
    
       assign MemWrEn = (opcode == `OPCODE_STORE) ? 1'b1 : 1'b0;
-      assign RWrEn = (opcode == `OPCODE_COMPUTE || opcode == `OPCODE_IMM || opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC || opcode == `OPCODE_LOAD || opcode == `OPCODE_JAL) ? 1 : 0;
+      assign RWrEn = (opcode == `OPCODE_COMPUTE || opcode == `OPCODE_IMM || opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC || opcode == `OPCODE_LOAD || opcode == `OPCODE_JAL || opcode == `OPCODE_JALR) ? 1 : 0;
       assign imm_sel = (opcode == `OPCODE_IMM && funct3 == `FUNC_SLTU) ? 3'b100 : 
                        (opcode == `OPCODE_BRANCH) ? 3'b110 : 
                        (opcode == `OPCODE_LOAD || (opcode == `OPCODE_IMM && funct3 != `FUNC_SLTU) ) ? 3'b011 : 
