@@ -102,7 +102,7 @@ module SingleCycleCPU(halt, clk, rst);
      
    // System State 
    Mem   MEM(.InstAddr(PC), .InstOut(InstWord), 
-            .DataAddr(DataAddr), .DataSize(MemSize), .DataIn(StoreData), .DataOut(DataWord), .WE(MemWrEn), .CLK(clk));
+            .DataAddr(ExecutionResult), .DataSize(MemSize), .DataIn(StoreData), .DataOut(DataWord), .WE(MemWrEn), .CLK(clk));
 
    RegFile RF(.AddrA(Rsrc1), .DataOutA(Rdata1), 
 	      .AddrB(Rsrc2), .DataOutB(Rdata2), 
