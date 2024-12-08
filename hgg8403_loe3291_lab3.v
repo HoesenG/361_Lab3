@@ -47,6 +47,7 @@ module SingleCycleCPU(halt, clk, rst);
    wire [`WORD_WIDTH-1:0] PC, InstWord;
    wire [`WORD_WIDTH-1:0] DataAddr, StoreData, DataWord;
    wire [1:0]  MemSize;
+   assign MemSize = `SIZE_WORD;
    wire        MemWrEn;
    
    wire [4:0]  Rsrc1, Rsrc2, Rdst;
@@ -139,7 +140,7 @@ module SingleCycleCPU(halt, clk, rst);
    assign LoadData_B = { {24{DataWord[7]}}, DataWord[7:0]};
    assign LoadData_H = { {16{DataWord[15]}}, DataWord[15:0]};
    assign LoadData_W = DataWord;
-   assign LoadData_BU = {16'b0, DataWord[15:0]};
+   assign LoadData_BU = {24'b0, DataWord[7:0]};
    assign LoadData_HU = {16'b0, DataWord[15:0]};
    MUX32_8_1 MUX_LoadData(.a(LoadData_B), .b(LoadData_H), .c(LoadData_W), .d(LoadData_BU), .e(LoadData_HU), .f(LoadData_W), .g(LoadData_W), .h(LoadData_W), .sel(Load_sel), .o(LoadData));
 
